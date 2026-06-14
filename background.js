@@ -1,4 +1,3 @@
-// Burada Wi-Fi skan edilir
 chrome.wifi.onWifiChanged.addListener((networks) => {
   console.log('Wi-Fi şəbəkələri yeniləndi:', networks);
 });
