@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Wi-Fi Scanner</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 500px;
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a0e17;
+      color: #00ff88;
+      padding: 15px;
+    }
+    h1 {
+      font-size: 20px;
+      text-align: center;
+      padding: 10px;
+      border-bottom: 1px solid #00ff8844;
+      margin-bottom: 15px;
+    }
+    h1 span { color: #ff4444; }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #00ff88;
+      color: #0a0e17;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+    .btn:hover { background: #00cc66; }
+    .btn:disabled {
+      background: #334455;
+      color: #6688aa;
+      cursor: not-allowed;
+    }
+    .network {
+      background: #0d1b2a;
+      border: 1px solid #1b2838;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .network .ssid {
+      font-size: 16px;
+      font-weight: bold;
+      color: #ffffff;
+    }
+    .network .details {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #6688aa;
+    }
+    .network .security {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+    .security.wpa2 { background: #00ff8822; color: #00ff88; }
+    .security.wpa3 { background: #00aaff22; color: #00aaff; }
+    .security.wep { background: #ff444422; color: #ff4444; }
+    .security.open { background: #ffaa0022; color: #ffaa00; }
+    
+    .signal {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .signal .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #334455;
+    }
+    .signal .dot.active { background: #00ff88; }
+    
+    .status {
+      text-align: center;
+      padding: 10px;
+      color: #6688aa;
+      font-size: 13px;
+    }
+    .error {
+      color: #ff4444;
+      text-align: center;
+      padding: 10px;
+    }
+    .count {
+      text-align: center;
+      color: #6688aa;
+      font-size: 12px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1><span>✦</span> Wi-Fi Scanner</h1>
+  
+  <button id="scanBtn" class="btn">📡 Skan et</button>
+  
+  <div id="status" class="status">Skan etmək üçün düyməyə klikləyin</div>
+  <div id="count" class="count"></div>
+  <div id="networks"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
