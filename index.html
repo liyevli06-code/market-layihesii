@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WiFi Scanner — Ətrafındakı Şəbəkələr</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #080c14;
+    --bg2: #0d1420;
+    --bg3: #111827;
+    --surface: #141e2e;
+    --surface2: #1a2640;
+    --border: rgba(99,179,237,0.12);
+    --border2: rgba(99,179,237,0.25);
+    --accent: #38bdf8;
+    --accent2: #0ea5e9;
+    --accent-dim: rgba(56,189,248,0.08);
+    --accent-mid: rgba(56,189,248,0.18);
+    --green: #34d399;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .bg-glow {
+    position: fixed;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 500px;
+    background: radial-gradient(ellipse, rgba(56,189,248,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 3rem 0 2.5rem;
+  }
+
+  .logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent2), #6366f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(56,189,248,0.3);
+  }
+
+  .logo-icon svg {
+    width: 26px;
+    height: 26px;
+    fill: none;
+    stroke: white;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin-bottom: 0.75rem;
+    background: linear-gradient(135deg, #fff 30%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header p {
+    color: var(--text2);
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* Scan button */
+  .scan-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    margin: 2.5rem 0;
+  }
+
+  .scan-btn {
+    position: relative;
+    border: none;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+  }
+
+  .scan-btn-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, var(--accent2), #6366f1);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 14px 32px;
+    border-radius: 100px;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(56,189,248,0.25), 0 4px 20px rgba(0,0,0,0.4);
+    letter-spacing: 0.01em;
+  }
+
+  .scan-btn:hover .scan-btn-inner {
+    transform: translateY(-2px);
+    box-shadow: 0 0 50px rgba(56,189,248,0.4), 0 8px 30px rgba(0,0,0,0.5);
+  }
+
+  .scan-btn:active .scan-btn-inner {
+    transform: scale(0.97);
+  }
+
+  .scan-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: white;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+  }
+
+  /* Radar animation */
+  .radar-wrap {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: none;
+  }
+
+  .radar-wrap.active { display: flex; align-items: center; justify-content: center; }
+
+  .radar-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid var(--accent);
+    animation: radar-expand 1.8s ease-out infinite;
+    opacity: 0;
+  }
+  .radar-ring:nth-child(2) { animation-delay: 0.5s; }
+  .radar-ring:nth-child(3) { animation-delay: 1s; }
+
+  @keyframes radar-expand {
+    0%  { width: 20px; height: 20px; opacity: 0.7; }
+    100%{ width: 100px; height: 100px; opacity: 0; }
+  }
+
+  .radar-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 16px var(--accent);
+    position: relative; z-index: 2;
+  }
+
+  /* Status bar */
+  .status-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: var(--text2);
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
+    min-height: 52px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text3);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .status-dot.scanning { background: var(--amber); animation: pulse 1s infinite; }
+  .status-dot.done { background: var(--green); }
+  .status-dot.error { background: var(--red); }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* WiFi list */
+  .wifi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 0.5rem;
+  }
+
+  .wifi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wifi-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent-dim), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .wifi-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .wifi-card:hover::before { opacity: 1; }
+
+  .wifi-card.open {
+    border-color: rgba(52,211,153,0.25);
+    background: linear-gradient(135deg, rgba(52,211,153,0.04), var(--surface));
+  }
+
+  .signal-icon {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2.5px;
+    height: 20px;
+  }
+
+  .bar {
+    width: 4px;
+    border-radius: 2px;
+    background: var(--text3);
+    transition: background 0.3s;
+  }
+  .bar.active { background: var(--accent); }
+  .bar.active.green { background: var(--green); }
+  .bar:nth-child(1) { height: 6px; }
+  .bar:nth-child(2) { height: 10px; }
+  .bar:nth-child(3) { height: 14px; }
+  .bar:nth-child(4) { height: 18px; }
+
+  .wifi-info { flex: 1; min-width: 0; }
+
+  .wifi-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .wifi-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--text3);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .badge-lock {
+    background: rgba(251,191,36,0.12);
+    color: var(--amber);
+    border: 1px solid rgba(251,191,36,0.2);
+  }
+
+  .badge-open {
+    background: rgba(52,211,153,0.1);
+    color: var(--green);
+    border: 1px solid rgba(52,211,153,0.2);
+  }
+
+  .connect-btn {
+    flex-shrink: 0;
+    background: var(--accent-dim);
+    border: 1px solid var(--border2);
+    color: var(--accent);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .connect-btn:hover {
+    background: var(--accent-mid);
+    border-color: var(--accent);
+    transform: scale(1.03);
+  }
+
+  /* Password modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 420px;
+    width: 100%;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.25s;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(56,189,248,0.05);
+  }
+
+  .modal-overlay.open .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-wifi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent2), #6366f1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(56,189,248,0.2);
+  }
+
+  .modal-wifi-icon svg {
+    width: 22px; height: 22px;
+    fill: none; stroke: white;
+    stroke-width: 2; stroke-linecap: round;
+  }
+
+  .modal-title {
+    flex: 1;
+  }
+
+  .modal-title h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 240px;
+  }
+
+  .modal-title p {
+    font-size: 0.78rem;
+    color: var(--text3);
+  }
+
+  .modal-close {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.15s;
+  }
+
+  .modal-close:hover { background: var(--surface2); color: var(--text); }
+
+  .input-group {
+    margin-bottom: 1rem;
+  }
+
+  .input-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .pw-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 42px 12px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .pw-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56,189,248,0.1); }
+  .pw-input::placeholder { color: var(--text3); letter-spacing: 0; font-family: 'Inter', sans-serif; font-size: 0.85rem; }
+
+  .eye-btn {
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    transition: color 0.15s;
+  }
+
+  .eye-btn:hover { color: var(--text2); }
+  .eye-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 1.5rem;
+  }
+
+  .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-cancel:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-connect {
+    flex: 2;
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--accent2), #6366f1);
+    border: none;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(56,189,248,0.2);
+  }
+
+  .btn-connect:hover { transform: translateY(-1px); box-shadow: 0 6px 25px rgba(56,189,248,0.35); }
+  .btn-connect:active { transform: scale(0.98); }
+
+  .btn-connect svg { width: 16px; height: 16px; fill: none; stroke: white; stroke-width: 2.2; stroke-linecap: round; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 100px;
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 200;
+    white-space: nowrap;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .toast-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+  }
+
+  /* Notice */
+  .notice {
+    background: rgba(56,189,248,0.05);
+    border: 1px solid rgba(56,189,248,0.15);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: var(--text2);
+    line-height: 1.5;
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+
+  .notice svg { flex-shrink: 0; margin-top: 1px; width: 16px; height: 16px; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
+
+  /* Section heading */
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .count-badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 3rem;
+    color: var(--text3);
+    font-size: 0.78rem;
+  }
+
+  @media (max-width: 500px) {
+    .wifi-card { padding: 14px 14px; gap: 12px; }
+    .connect-btn { padding: 7px 12px; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="container">
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M1.5 8.5C5.5 4.5 10.5 2.5 12 2.5s6.5 2 10.5 6"/><path d="M5 12c1.9-2 4.5-3 7-3s5.1 1 7 3"/><path d="M8.5 15.5c1-1 2.1-1.5 3.5-1.5s2.5.5 3.5 1.5"/><circle cx="12" cy="19" r="1.5" fill="white" stroke="none"/></svg>
+      </div>
+      <span class="logo-text">WiFi Radar</span>
+    </div>
+    <h1>Ətrafındakı<br>şəbəkələri kəşf et</h1>
+    <p>Yaxınlığındakı bütün WiFi şəbəkələri skan et, seçdiyin şəbəkəyə qoşul</p>
+  </header>
+
+  <div class="scan-section">
+    <button class="scan-btn" id="scanBtn" onclick="startScan()">
+      <div class="scan-btn-inner">
+        <svg viewBox="0 0 24 24"><path d="M1.5 8.5C5.5 4.5 10.5 2.5 12 2.5s6.5 2 10.5 6"/><path d="M5 12c1.9-2 4.5-3 7-3s5.1 1 7 3"/><path d="M8.5 15.5c1-1 2.1-1.5 3.5-1.5s2.5.5 3.5 1.5"/><circle cx="12" cy="19" r="1.5" fill="white" stroke="none"/></svg>
+        Şəbəkələri Skan Et
+      </div>
+    </button>
+    <div class="radar-wrap" id="radarWrap">
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+      <div class="radar-dot"></div>
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Skan etmək üçün yuxarıdakı düyməyə basın</span>
+  </div>
+
+  <div id="resultsSection" style="margin-top: 2rem; display: none;">
+    <div class="notice">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
+      <span>Brauzer WiFi şəbəkələrinə birbaşa qoşulmağa icazə vermir. Şifrəni kopyalayıb sistem ayarlarından qoşula bilərsiniz.</span>
+    </div>
+
+    <div class="section-head">
+      <span class="section-title">Tapılan Şəbəkələr</span>
+      <span class="count-badge" id="wifiCount">0</span>
+    </div>
+
+    <div class="wifi-list" id="wifiList"></div>
+  </div>
+
+  <footer>WiFi Radar — Şəbəkə kəşfiyyatçısı</footer>
+</div>
+
+<!-- Password Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-wifi-icon">
+        <svg viewBox="0 0 24 24"><path d="M1.5 8.5C5.5 4.5 10.5 2.5 12 2.5s6.5 2 10.5 6"/><path d="M5 12c1.9-2 4.5-3 7-3s5.1 1 7 3"/><path d="M8.5 15.5c1-1 2.1-1.5 3.5-1.5s2.5.5 3.5 1.5"/><circle cx="12" cy="19" r="1.5" fill="white" stroke="none"/></svg>
+      </div>
+      <div class="modal-title">
+        <h3 id="modalNetworkName">Şəbəkə adı</h3>
+        <p id="modalNetworkMeta">Şifrəni daxil edin</p>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">WiFi Şifrəsi</label>
+      <div class="input-wrap">
+        <input class="pw-input" type="password" id="pwInput" placeholder="Şifrəni buraya yazın..." autocomplete="off">
+        <button class="eye-btn" id="eyeBtn" onclick="togglePw()">
+          <svg id="eyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Ləğv et</button>
+      <button class="btn-connect" onclick="fakeConnect()">
+        <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        Qoşul
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg">Şifrə kopyalandı!</span>
+</div>
+
+<script>
+const networks = [
+  { ssid: "Nar Mobile WiFi_5G", signal: 4, security: "WPA2", band: "5 GHz", channel: 36, mac: "A4:2B:8C:11:FF:23" },
+  { ssid: "AzTelecom_Home", signal: 4, security: "WPA3", band: "2.4 GHz", channel: 6, mac: "B8:27:EB:44:AA:01" },
+  { ssid: "Bakcell_Router", signal: 3, security: "WPA2", band: "2.4 GHz", channel: 11, mac: "C0:4A:00:8E:3D:72" },
+  { ssid: "SilkNet_Fiber", signal: 3, security: "WPA2", band: "5 GHz", channel: 100, mac: "D8:3A:DD:2F:B1:90" },
+  { ssid: "AZERCELL_FREE", signal: 2, security: "Açıq", band: "2.4 GHz", channel: 1, mac: "00:1A:2B:3C:4D:5E" },
+  { ssid: "Qonaq_WiFi", signal: 2, security: "WPA2", band: "2.4 GHz", channel: 9, mac: "F4:CF:A2:B3:10:8D" },
+  { ssid: "OFFICE_NET_PRO", signal: 3, security: "WPA2-Enterprise", band: "5 GHz", channel: 149, mac: "9C:B7:0D:EE:22:A1" },
+  { ssid: "iPhone_hotspot", signal: 1, security: "WPA3", band: "2.4 GHz", channel: 4, mac: "7A:BC:DE:F1:23:45" },
+  { ssid: "TP-Link_4A2B", signal: 2, security: "WPA2", band: "2.4 GHz", channel: 3, mac: "EC:08:6B:4A:2B:C9" },
+  { ssid: "HUAWEI-Home-5G", signal: 4, security: "WPA3", band: "5 GHz", channel: 44, mac: "28:6E:D4:8A:BC:D1" },
+];
+
+let currentNetwork = null;
+let pwVisible = false;
+let scanning = false;
+
+function startScan() {
+  if (scanning) return;
+  scanning = true;
+
+  const btn = document.getElementById('scanBtn');
+  btn.style.opacity = '0.5';
+  btn.style.pointerEvents = 'none';
+  document.getElementById('radarWrap').classList.add('active');
+  document.getElementById('resultsSection').style.display = 'none';
+
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  dot.className = 'status-dot scanning';
+  txt.textContent = 'Şəbəkələr axtarılır...';
+
+  const msgs = [
+    'Kanal 1–11 skan edilir...',
+    '5 GHz diapazon yoxlanılır...',
+    'Şəbəkə məlumatları toplanır...',
+    'Siqnal gücü ölçülür...',
+  ];
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < msgs.length) { txt.textContent = msgs[i++]; }
+  }, 700);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    document.getElementById('radarWrap').classList.remove('active');
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+    scanning = false;
+
+    dot.className = 'status-dot done';
+    txt.textContent = networks.length + ' şəbəkə tapıldı';
+
+    renderNetworks();
+    document.getElementById('resultsSection').style.display = 'block';
+  }, 3000);
+}
+
+function renderNetworks() {
+  const list = document.getElementById('wifiList');
+  document.getElementById('wifiCount').textContent = networks.length;
+  list.innerHTML = '';
+
+  const sorted = [...networks].sort((a,b) => b.signal - a.signal);
+  sorted.forEach((n, idx) => {
+    const isOpen = n.security === 'Açıq';
+    const card = document.createElement('div');
+    card.className = 'wifi-card' + (isOpen ? ' open' : '');
+    card.style.animationDelay = (idx * 0.06) + 's';
+
+    const bars = [1,2,3,4].map(b => {
+      const cls = b <= n.signal ? ('bar active' + (n.signal === 4 ? ' green' : '')) : 'bar';
+      return `<div class="${cls}"></div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="signal-icon">
+        <div class="signal-bars">${bars}</div>
+      </div>
+      <div class="wifi-info">
+        <div class="wifi-name">${n.ssid}</div>
+        <div class="wifi-meta">
+          <span class="badge ${isOpen ? 'badge-open' : 'badge-lock'}">
+            ${isOpen ? '🔓 Açıq' : '🔒 ' + n.security}
+          </span>
+          <span>${n.band}</span>
+          <span>Ch ${n.channel}</span>
+        </div>
+      </div>
+      <button class="connect-btn" onclick="openModal(event, '${n.ssid}', '${n.security}', '${n.mac}', '${n.band}', ${n.signal})">
+        ${isOpen ? 'Qoşul' : 'Şifrə'}
+      </button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function openModal(e, ssid, sec, mac, band, sig) {
+  e.stopPropagation();
+  currentNetwork = { ssid, sec, mac, band, sig };
+  document.getElementById('modalNetworkName').textContent = ssid;
+  document.getElementById('modalNetworkMeta').textContent = sec + ' · ' + band + ' · ' + mac;
+  document.getElementById('pwInput').value = '';
+  document.getElementById('pwInput').type = 'password';
+  pwVisible = false;
+  updateEye();
+  document.getElementById('modal').classList.add('open');
+  setTimeout(() => document.getElementById('pwInput').focus(), 300);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  currentNetwork = null;
+}
+
+function togglePw() {
+  pwVisible = !pwVisible;
+  document.getElementById('pwInput').type = pwVisible ? 'text' : 'password';
+  updateEye();
+}
+
+function updateEye() {
+  document.getElementById('eyeIcon').innerHTML = pwVisible
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+function fakeConnect() {
+  const pw = document.getElementById('pwInput').value;
+  const net = currentNetwork;
+  if (!net) return;
+
+  if (net.sec !== 'Açıq' && pw.trim() === '') {
+    document.getElementById('pwInput').style.borderColor = 'var(--red)';
+    document.getElementById('pwInput').style.boxShadow = '0 0 0 3px rgba(248,113,113,0.15)';
+    setTimeout(() => {
+      document.getElementById('pwInput').style.borderColor = '';
+      document.getElementById('pwInput').style.boxShadow = '';
+    }, 1500);
+    return;
+  }
+
+  if (pw) {
+    navigator.clipboard.writeText(pw).catch(() => {});
+    showToast('✓ Şifrə kopyalandı: ' + pw.slice(0,3) + '***');
+  } else {
+    showToast('✓ Açıq şəbəkə: ' + net.ssid);
+  }
+  closeModal();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.getElementById('pwInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') fakeConnect();
+});
+</script>
+</body>
+</html>
